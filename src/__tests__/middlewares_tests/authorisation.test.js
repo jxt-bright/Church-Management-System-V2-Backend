@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import verifyAccessLevel from './authorisation.js'; // Adjust path as needed
+import verifyAccessLevel from '../../middlewares/authorisation.js'; // Adjust path as needed
 
 describe('Authorisation Middleware', () => {
   let req, res, next;

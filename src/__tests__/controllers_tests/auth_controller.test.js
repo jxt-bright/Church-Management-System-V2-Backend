@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import * as authController from './auth_controller.js';
-import { User } from "../models/users_model.js";
+import * as authController from '../../controllers/auth_controller.js';
+import { User } from "../../models/users_model.js";
 import jwt from 'jsonwebtoken';
 
 
 
-vi.mock('../models/users_model.js');
+vi.mock('../../models/users_model.js');
 vi.mock('jsonwebtoken');
 
 describe('Auth Controller', () => {

@@ -10,6 +10,7 @@ import authRouter from './routes/auth_route.js'
 import memberRouter from './routes/members_route.js'
 import groupRouter from './routes/groups_route.js'
 import churchRouter from './routes/churches_route.js'
+import attendanceRouter from './routes/attendance_route.js'
 
 // Import other files
 import passportConfig from "./config/passport.js";
@@ -42,6 +43,7 @@ app.use("/api/v2/users", userRouter);
 app.use("/api/v2/members", memberRouter);
 app.use("/api/v2/groups", groupRouter);
 app.use("/api/v2/churches", churchRouter);
+app.use('/api/v2/attendance', attendanceRouter);
 
 
 

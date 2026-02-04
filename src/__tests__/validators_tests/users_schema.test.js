@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { registerUserSchema, updateUserSchema } from './users_schema.js'; 
+import { registerUserSchema, updateUserSchema } from '../../validators/users_schema.js'; 
 
 // Mock user
 const getValidUser = () => ({

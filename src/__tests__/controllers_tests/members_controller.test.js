@@ -1,20 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { Member } from "../models/members_model.js";
-import { Church } from "../models/churches_model.js";
-import cloudinary from '../config/cloudinary.js';
+import { Member } from "../../models/members_model.js";
+import { Church } from "../../models/churches_model.js";
+import cloudinary from '../../config/cloudinary.js';
 import {
   registerMember,
   getMembers,
   getMemberById,
   updateMember,
   deleteMember
-} from './members_controller.js';
+} from '../../controllers/members_controller.js';
 
 
 // Mock dependencies
-vi.mock('../models/members_model.js');
-vi.mock('../models/churches_model.js');
-vi.mock('../config/cloudinary.js', () => ({
+vi.mock('../../models/members_model.js');
+vi.mock('../../models/churches_model.js');
+vi.mock('../../config/cloudinary.js', () => ({
   default: {
     uploader: {
       upload: vi.fn(),

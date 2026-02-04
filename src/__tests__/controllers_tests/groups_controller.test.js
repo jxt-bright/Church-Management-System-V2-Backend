@@ -1,16 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { Group } from "../models/groups_model.js";
+import { Group } from "../../models/groups_model.js";
 import { 
     registerGroup, 
     getGroups, 
     getGroupById, 
     updateGroup, 
     deleteGroup 
-} from './groups_controller.js';
+} from '../../controllers/groups_controller.js';
 
 
 // Mock the Group Model
-vi.mock('../models/groups_model.js');
+vi.mock('../../models/groups_model.js');
 
 
 

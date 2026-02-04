@@ -1,18 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import mongoose from 'mongoose';
-import { User } from "../models/users_model.js";
-import { Member } from "../models/members_model.js";
+import { User } from "../../models/users_model.js";
+import { Member } from "../../models/members_model.js";
 import { 
     registerUser, 
     getUsers, 
     getUserById, 
     updateUser, 
     deleteUser 
-} from './users_controller.js';
+} from '../../controllers/users_controller.js';
 
 // Mock models
-vi.mock('../models/users_model.js');
-vi.mock('../models/members_model.js');
+vi.mock('../../models/users_model.js');
+vi.mock('../../models/members_model.js');
 
 
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { loginUserSchema } from './auth_schema.js'; // Adjust path to your file
+import { loginUserSchema } from '../../validators/auth_schema.js'; // Adjust path to your file
 
 describe('Login User Schema', () => {
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { registerMemberSchema } from './members_schema.js';
+import { registerMemberSchema } from '../../validators/members_schema.js';
 
 // Mock member
 const getValidMember = () => ({

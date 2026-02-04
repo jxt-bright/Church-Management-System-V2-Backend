@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { registerGroupSchema } from './groups_schema.js';
+import { registerGroupSchema } from '../../validators/groups_schema.js';
 
 describe('Register Group Schema', () => {
 

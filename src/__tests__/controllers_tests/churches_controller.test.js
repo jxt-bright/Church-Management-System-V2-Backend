@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { Church } from "../models/churches_model.js";
+import { Church } from "../../models/churches_model.js";
 import mongoose from 'mongoose';
 
 import {
@@ -8,11 +8,11 @@ import {
   getChurchById,
   updateChurch,
   deleteChurch
-} from './churches_controller.js';
+} from '../../controllers/churches_controller.js';
 
 
 // Mock churches_model(churches schema)
-vi.mock('../models/churches_model.js');
+vi.mock('../../models/churches_model.js');
 
 
 

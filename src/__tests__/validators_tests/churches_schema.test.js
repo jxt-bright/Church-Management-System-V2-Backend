@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { registerChurchSchema } from './churches_schema.js'; 
+import { registerChurchSchema } from '../../validators/churches_schema.js'; 
 
 describe('Register Church Schema', () => {
 

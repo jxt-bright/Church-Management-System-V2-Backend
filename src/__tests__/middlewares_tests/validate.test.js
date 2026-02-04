@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Joi from 'joi';
-import validate from './validate.js';
+import validate from '../../middlewares/validate.js';
 
 describe('Validation Middleware', () => {
   let req, res, next;
