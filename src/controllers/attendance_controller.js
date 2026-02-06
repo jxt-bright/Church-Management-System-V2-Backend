@@ -9,7 +9,7 @@ const saveAttendance = async (req, res) => {
             message: 'Attendance Record successfully saved'
         });
     } catch (error) {
-        if (error.message === 'Attendance with this date exists') {
+        if (error.message === 'Attendance with this date exist') {
             return res.status(400).json({ message: error.message });
         }
         res.status(500).json({ message: 'Error saving attendance' });

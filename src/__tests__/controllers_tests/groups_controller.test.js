@@ -1,18 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { Group } from "../../models/groups_model.js";
-import { 
-    registerGroup, 
-    getGroups, 
-    getGroupById, 
-    updateGroup, 
-    deleteGroup 
+import * as groupService from '../../services/groups.service.js';
+import {
+  registerGroup,
+  getGroups,
+  getGroupById,
+  updateGroup,
+  deleteGroup
 } from '../../controllers/groups_controller.js';
 
-
-// Mock the Group Model
-vi.mock('../../models/groups_model.js');
-
-
+// Mock the SERVICE
+vi.mock('../../services/groups.service.js');
 
 describe('Groups Controller', () => {
   let req, res;
@@ -20,7 +17,6 @@ describe('Groups Controller', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Mock req and res
     req = {
       body: {},
       params: {},
@@ -35,213 +31,125 @@ describe('Groups Controller', () => {
 
 
 
-  // Register group endpoint tests
   describe('registerGroup', () => {
-    beforeEach(() => {
-        req.body = { name: 'Ashanti Region Group', description: 'Main branch' };
-    });
-
-
-    it('should create a new group if name is unique', async () => {
-      Group.findOne.mockResolvedValue(null);
-      Group.create.mockResolvedValue({ _id: 'new-id', ...req.body });
+    it('should return 201 when group is created', async () => {
+      req.body = { name: 'Western Region Group' };
+      groupService.createGroup.mockResolvedValue();
 
       await registerGroup(req, res);
 
-      expect(Group.findOne).toHaveBeenCalledWith({ name: 'Ashanti Region Group' });
-      expect(Group.create).toHaveBeenCalled();
+      expect(groupService.createGroup).toHaveBeenCalledWith(req.body);
       expect(res.status).toHaveBeenCalledWith(201);
-      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      expect(res.json).toHaveBeenCalledWith({
         success: true,
-        message: "Group successfully registered."
+        message: 'Group successfully registered.'
+      });
+    });
+
+    it('should return 400 if group already exists', async () => {
+      const errorMsg = 'A Group with same name already exists';
+      groupService.createGroup.mockRejectedValue(new Error(errorMsg));
+
+      await registerGroup(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({ message: errorMsg });
+    });
+  });
+
+
+
+  describe('getGroups', () => {
+    it('should return groups list and 200 status', async () => {
+      const result = { groups: [{ name: 'Group A' }], totalPages: 1, totalGroups: 1 };
+      req.query = { page: '1', limit: '10' };
+      groupService.fetchAllGroups.mockResolvedValue(result);
+
+      await getGroups(req, res);
+
+      expect(groupService.fetchAllGroups).toHaveBeenCalledWith(req.query);
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith(result);
+    });
+
+    it('should return 500 and the error message on failure', async () => {
+      groupService.fetchAllGroups.mockRejectedValue(new Error('Fetch Failed'));
+
+      await getGroups(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+        message: 'Error fetching groups',
+        error: 'Fetch Failed'
       }));
     });
-
-
-    it('should return 400 if a group with the same name exists', async () => {
-      Group.findOne.mockResolvedValue({ _id: 'existing-id', name: 'Ashanti Region Group' });
-
-      await registerGroup(req, res);
-
-      expect(Group.create).not.toHaveBeenCalled();
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({ 
-        message: "A Group with same name already exists" 
-      });
-    });
-
-
-    it('should return 500 if the database throws an error', async () => {
-      Group.findOne.mockRejectedValue(new Error('DB Error'));
-      await registerGroup(req, res);
-      expect(res.status).toHaveBeenCalledWith(500);
-    });
   });
 
 
 
-  // Tests for getGroups endpoint
-  describe('getGroups', () => {
-    it('should return paginated groups and metadata', async () => {
-      req.query = { page: '1', limit: '10' };
-
-      // The controller expects: [{ metadata: [{ total: X }], data: [...] }]
-      const mockResult = [{
-          metadata: [{ total: 5 }],
-          data: [{ name: 'Ashanti Group' }, { name: 'Central Group' }]
-      }];
-
-      Group.aggregate.mockResolvedValue(mockResult);
-
-      await getGroups(req, res);
-
-      expect(Group.aggregate).toHaveBeenCalled();
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith({
-          groups: mockResult[0].data,
-          totalPages: 1, // 5 items / 10 limit = 1 page
-          totalGroups: 5
-      });
-    });
-
-
-    it('should handle search queries', async () => {
-      req.query.search = 'Ashanti';
-      // Mock empty result
-      Group.aggregate.mockResolvedValue([{ metadata: [{ total: 0 }], data: [] }]);
-
-      await getGroups(req, res);
-
-      // Check if regex was passed to match stage
-      const aggregateArgs = Group.aggregate.mock.calls[0][0];
-      expect(aggregateArgs[0].$match.$or[0].name.$regex).toBe('^Ashanti');
-    });
-
-    it('should return 500 if aggregation fails', async () => {
-        Group.aggregate.mockRejectedValue(new Error('DB Error'));
-        await getGroups(req, res);
-        expect(res.status).toHaveBeenCalledWith(500);
-    });
-  });
-
-
-
-  // Tests for getGroupById endpoint
   describe('getGroupById', () => {
-      it('should return group data if found', async () => {
-          req.params.id = 'group123';
-          const mockGroup = { _id: 'group123', name: 'Test Group' };
-          Group.findById.mockResolvedValue(mockGroup);
+    it('should return 200 and group details if found', async () => {
+      const group = { _id: 'g123', name: 'Ashanti Group' };
+      req.params.id = 'g123';
+      groupService.fetchGroupById.mockResolvedValue(group);
 
-          await getGroupById(req, res);
+      await getGroupById(req, res);
 
-          expect(Group.findById).toHaveBeenCalledWith('group123');
-          expect(res.status).toHaveBeenCalledWith(200);
-          expect(res.json).toHaveBeenCalledWith(mockGroup);
-      });
+      expect(groupService.fetchGroupById).toHaveBeenCalledWith('g123');
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith(group);
+    });
 
-
-      it('should return 404 if group not found', async () => {
-          req.params.id = 'group123';
-          Group.findById.mockResolvedValue(null);
-
-          await getGroupById(req, res);
-
-          expect(res.status).toHaveBeenCalledWith(404);
-          expect(res.json).toHaveBeenCalledWith({ message: 'Group not found' });
-      });
-
-
-      it('should return 500 on server error', async () => {
-          Group.findById.mockRejectedValue(new Error('DB Fail'));
-          await getGroupById(req, res);
-          expect(res.status).toHaveBeenCalledWith(500);
-      });
+    it('should return 404 if group is not found', async () => {
+      groupService.fetchGroupById.mockRejectedValue(new Error('Group not found'));
+      await getGroupById(req, res);
+      expect(res.status).toHaveBeenCalledWith(404);
+    });
   });
 
 
 
-  // Tests for updateGroup endpoint
   describe('updateGroup', () => {
-      beforeEach(() => {
-          req.params.id = 'group123';
-          req.body = { name: 'Updated Name' };
-      });
+    it('should call modifyGroup with correct ID and body', async () => {
+      req.params.id = 'g123';
+      req.body = { name: 'New Ashanti Name' };
+      groupService.modifyGroup.mockResolvedValue();
 
+      await updateGroup(req, res);
 
-      it('should update group and return 200', async () => {
-          Group.findByIdAndUpdate.mockResolvedValue({});
+      expect(groupService.modifyGroup).toHaveBeenCalledWith('g123', req.body);
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({ message: 'Group updated successfully' });
+    });
 
-          await updateGroup(req, res);
-
-          expect(Group.findByIdAndUpdate).toHaveBeenCalledWith(
-              'group123', 
-              req.body, 
-              { new: false, runValidators: true }
-          );
-          expect(res.status).toHaveBeenCalledWith(200);
-          expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: 'Group updated successfully' }));
-      });
-
-
-      it('should return 400 if duplicate name (Error 11000)', async () => {
-          const error = new Error('Duplicate');
-          error.code = 11000;
-          Group.findByIdAndUpdate.mockRejectedValue(error);
-
-          await updateGroup(req, res);
-
-          expect(res.status).toHaveBeenCalledWith(400);
-          expect(res.json).toHaveBeenCalledWith({ message: 'Group name already exists' });
-      });
-
-
-      it('should return 500 on generic error', async () => {
-          Group.findByIdAndUpdate.mockRejectedValue(new Error('Fail'));
-          await updateGroup(req, res);
-          expect(res.status).toHaveBeenCalledWith(500);
-      });
+    it('should return 400 on duplicate name error', async () => {
+      groupService.modifyGroup.mockRejectedValue(new Error('Group name already exists'));
+      await updateGroup(req, res);
+      expect(res.status).toHaveBeenCalledWith(400);
+    });
   });
 
 
-
-  // Tests for deleteGroup endpoint
+  
   describe('deleteGroup', () => {
-      it('should delete group if found', async () => {
-          req.params.id = 'group123';
-          
-          // Mock deleteOne
-          const mockGroupInstance = { 
-              _id: 'group123', 
-              deleteOne: vi.fn().mockResolvedValue(true) 
-          };
-          Group.findById.mockResolvedValue(mockGroupInstance);
+    it('should return 200 and the deleted ID on success', async () => {
+      req.params.id = 'g123';
+      groupService.removeGroup.mockResolvedValue('g123');
 
-          await deleteGroup(req, res);
+      await deleteGroup(req, res);
 
-          expect(Group.findById).toHaveBeenCalledWith('group123');
-          expect(mockGroupInstance.deleteOne).toHaveBeenCalled();
-          expect(res.status).toHaveBeenCalledWith(200);
-          expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: 'Group removed successfully' }));
+      expect(groupService.removeGroup).toHaveBeenCalledWith('g123');
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({ 
+        id: 'g123', 
+        message: 'Group removed successfully' 
       });
+    });
 
-
-      it('should return 404 if group to delete is not found', async () => {
-          Group.findById.mockResolvedValue(null);
-          await deleteGroup(req, res);
-          expect(res.status).toHaveBeenCalledWith(404);
-      });
-      
-
-      it('should return 500 if deleteOne fails', async () => {
-          const mockGroupInstance = { 
-              deleteOne: vi.fn().mockRejectedValue(new Error('Delete Fail')) 
-          };
-          Group.findById.mockResolvedValue(mockGroupInstance);
-
-          await deleteGroup(req, res);
-          expect(res.status).toHaveBeenCalledWith(500);
-      });
+    it('should return 404 if the group to delete does not exist', async () => {
+      groupService.removeGroup.mockRejectedValue(new Error('Group not found'));
+      await deleteGroup(req, res);
+      expect(res.status).toHaveBeenCalledWith(404);
+    });
   });
-
 });
