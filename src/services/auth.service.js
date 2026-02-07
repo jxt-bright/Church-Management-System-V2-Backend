@@ -60,7 +60,21 @@ const refreshUserToken = (incomingRefreshToken) => {
     });
 };
 
+
+// Logout
+const clearUserToken = async (refreshToken) => {
+    // Find the user with this token and unset it
+    const user = await User.findOne({ refreshToken });
+    if (!user) return; 
+
+    user.refreshToken = ""; 
+    await user.save();
+};
+
+
+
 export {
     authenticateUser,
-    refreshUserToken
+    refreshUserToken,
+    clearUserToken
 };

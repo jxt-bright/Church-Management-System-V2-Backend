@@ -55,7 +55,34 @@ const refreshToken = async (req, res) => {
     }
 };
 
+
+
+const logoutUser = async (req, res) => {
+    try {
+        const refreshToken = req.cookies?.refreshToken;
+
+        if (refreshToken) {
+            // Remove from Database
+            await authService.clearUserToken(refreshToken);
+        }
+
+        // Clear the Cookie
+        res.clearCookie("refreshToken", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "Strict",
+        });
+
+        return res.status(200).json({ success: true, message: "Logged out" });
+    } catch (error) {
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+
+
 export {
     loginUser,
     refreshToken,
+    logoutUser
 }

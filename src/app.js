@@ -37,7 +37,6 @@ passportConfig(passport);
 
 
 
-
 // routes declaration
 app.use("/api/v2/auth", authRouter);
 app.use("/api/v2/users", userRouter);
