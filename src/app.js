@@ -12,6 +12,7 @@ import groupRouter from './routes/groups_route.js'
 import churchRouter from './routes/churches_route.js'
 import attendanceRouter from './routes/attendance_route.js'
 import specialServiceRouter from './routes/specialService_route.js'
+import messagesRouter from './routes/messages_route.js'
 
 // Import other files
 import passportConfig from "./config/passport.js";
@@ -45,7 +46,7 @@ app.use("/api/v2/groups", groupRouter);
 app.use("/api/v2/churches", churchRouter);
 app.use('/api/v2/attendance', attendanceRouter);
 app.use('/api/v2/specialService', specialServiceRouter);
-
+app.use("/api/v2/messages", messagesRouter);
 
 
 export default app;
