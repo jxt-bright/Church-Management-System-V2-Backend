@@ -1,5 +1,8 @@
+
 import { Attendance } from '../models/attendance_model.js';
 import { SpecialService } from '../models/specialService_model.js';
+import { Group } from '../models/groups_model.js';
+import { Church } from '../models/churches_model.js';
 import { getMonthDateRange } from '../utils/date.utils.js';
 import mongoose from 'mongoose';
 
@@ -7,6 +10,24 @@ const monthlyReport = async (params) => {
     const { startDate, endDate } = getMonthDateRange(params.month);
     const [year, month] = params.month.split('-').map(Number);
 
+    // --- Identity Resolution ---
+    let groupName = "N/A";
+    let churchName = null;
+
+    if (params.churchId) {
+        const church = await Church.findById(params.churchId).populate('groupId').lean();
+        if (church) {
+            churchName = church.churchname || church.name;
+            groupName = church.groupId?.name || "N/A";
+        }
+    } else if (params.groupId) {
+        const group = await Group.findById(params.groupId).lean();
+        if (group) {
+            groupName = group.name;
+        }
+    }
+
+    // --- Existing Logic ---
     const filter = { date: { $gte: startDate, $lte: endDate } };
     if (params.churchId) filter.churchId = new mongoose.Types.ObjectId(params.churchId);
     else if (params.groupId) filter.groupId = new mongoose.Types.ObjectId(params.groupId);
@@ -33,6 +54,7 @@ const monthlyReport = async (params) => {
     ];
 
     const finalReport = {
+        meta: { groupName, churchName }, // Added Metadata here
         monday: [], thursday: [], sunday: [],
         gck: [], homeCaringFellowship: [], seminar: []
     };
@@ -81,14 +103,13 @@ const monthlyReport = async (params) => {
     const specialCats = [
         { cat: 'GCK', key: 'gck', aggregate: true },
         { cat: 'Home Caring Fellowship', key: 'homeCaringFellowship', aggregate: true },
-        { cat: 'Seminar', key: 'seminar', aggregate: false } // Set aggregate to false
+        { cat: 'Seminar', key: 'seminar', aggregate: false } 
     ];
 
     specialCats.forEach(({ cat, key, aggregate }) => {
         const catMatches = specialRecords.filter(r => r.category === cat);
 
         if (aggregate) {
-            // Grouping logic for GCK and Fellowship
             const grouped = catMatches.reduce((acc, curr) => {
                 const dStr = new Date(curr.date).toDateString();
                 if (!acc[dStr]) acc[dStr] = { date: curr.date, adults: 0, youths: 0, children: 0 };
@@ -99,14 +120,13 @@ const monthlyReport = async (params) => {
             }, {});
             finalReport[key] = Object.values(grouped).sort((a, b) => new Date(a.date) - new Date(b.date));
         } else {
-            // Direct mapping for Seminars (List all records individually)
             finalReport[key] = catMatches
                 .map(curr => ({
                     date: curr.date,
                     adults: curr.adults || 0,
                     youths: curr.youths || 0,
                     children: curr.children || 0,
-                    churchName: curr.churchName // Useful since you're listing them individually
+                    churchName: curr.churchName 
                 }))
                 .sort((a, b) => new Date(a.date) - new Date(b.date));
         }
@@ -123,6 +143,23 @@ const generalReport = async (params) => {
     end.setMonth(end.getMonth() + 1);
     end.setDate(0); 
 
+    // --- Identity Resolution ---
+    let groupName = "N/A";
+    let churchName = null;
+
+    if (params.churchId) {
+        const church = await Church.findById(params.churchId).populate('groupId').lean();
+        if (church) {
+            churchName = church.churchname || church.name;
+            groupName = church.groupId?.name || "N/A";
+        }
+    } else if (params.groupId) {
+        const group = await Group.findById(params.groupId).lean();
+        if (group) {
+            groupName = group.name;
+        }
+    }
+
     const filter = { date: { $gte: start, $lte: end } };
 
     if (params.churchId) {
@@ -137,6 +174,7 @@ const generalReport = async (params) => {
     ]);
 
     const finalReport = {
+        meta: { groupName, churchName }, // Added Metadata
         sunday: {}, monday: {}, thursday: {},
         gck: {}, homeCaringFellowship: {}, seminar: []
     };
@@ -192,9 +230,8 @@ const generalReport = async (params) => {
                 t: Math.ceil((totals.a + totals.y + totals.c) / count)
             };
         } else {
-            // Seminars remain as a listing
             finalReport[key] = catMatches.map(r => ({
-                date: r.date, adults: r.adults, youths: r.youths, children: r.children, total: r.adults + r.youths + r.children
+                date: r.date, adults: r.adults, youths: r.youths, children: r.children, total: (r.adults || 0) + (r.youths || 0) + (r.children || 0)
             })).sort((a, b) => new Date(a.date) - new Date(b.date));
         }
     });
