@@ -25,8 +25,8 @@ const saveAttendanceSchema = Joi.object({
     childrenfemale: attendanceRule,
     newcomersmales: attendanceRule,
     newcomersfemales: attendanceRule,
-    firstoffering: attendanceRule,
-    secondoffering: attendanceRule,
+    firstoffering: Joi.number().min(0),
+    secondoffering: Joi.number().min(0),
 
     // dayName: Joi.string()
     //     .trim()

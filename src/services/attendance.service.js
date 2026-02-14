@@ -1,6 +1,6 @@
 import { Church } from "../models/churches_model.js";
 import { Attendance } from "../models/attendance_model.js";
-import { getMonthDateRange } from "../utils/date.utils.js"; 
+import { getMonthDateRange } from "../utils/date.utils.js";
 
 
 
@@ -42,39 +42,45 @@ const fetchMonthlyAttendance = async (churchId, year, month) => {
 // UPDATE Logic
 const modifyAttendanceRecord = async (id, body) => {
     const { reason, ...attendanceValues } = body;
-    
+
     const numberFields = [
         'adultmale', 'adultfemale', 'youthmale', 'youthfemale',
         'childrenmale', 'childrenfemale', 'newcomersmales', 'newcomersfemales',
         'firstoffering', 'secondoffering'
     ];
 
-    let updatePayload = {};
-
+    let updateQuery = {};
 
     if (reason && reason.trim().length > 0) {
-        updatePayload.reason = reason;
-        numberFields.forEach(field => updatePayload[field] = null);
-    } else {
-        updatePayload.reason = null;
+        // CASE A: Switching to (or updating) a REASON record
+        updateQuery.$set = { reason: reason };
+        updateQuery.$unset = {};
         numberFields.forEach(field => {
+            updateQuery.$unset[field] = "";
+        });
+    } else {
+        // CASE B: Switching to (or updating) DATA values
+        // This will RE-INSERT the fields deleted by a previous $unset
+        updateQuery.$set = { reason: null };
+
+        numberFields.forEach(field => {
+            // If the value exists in the body, set it. 
+            // If it doesn't, we set it to 0 (or null) to ensure the field exists again.
             if (attendanceValues[field] !== undefined) {
-                updatePayload[field] = attendanceValues[field];
+                updateQuery.$set[field] = attendanceValues[field];
             } else {
-                updatePayload[field] = null; // Enforce null if missing
+                updateQuery.$set[field] = 0;
             }
         });
     }
 
-    const updated = await Attendance.findByIdAndUpdate(id, updatePayload, { 
-        new: true, 
-        runValidators: true 
-    });
+    const updated = await Attendance.findByIdAndUpdate(
+        id,
+        updateQuery,
+        { new: true, runValidators: true }
+    );
 
-    if (!updated) {
-        throw new Error("Attendance record not found");
-    }
-
+    if (!updated) throw new Error("Attendance record not found");
     return updated;
 };
 

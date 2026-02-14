@@ -2,8 +2,11 @@ import jwt from 'jsonwebtoken';
 import { User } from "../models/users_model.js";
 
 const authenticateUser = async (username, password) => {
-    // check if the user exists
-    const user = await User.findOne({ username });
+    // Trim the username
+    const cleanUsername = username ? username.trim() : "";
+
+    // check if the user exists using username
+    const user = await User.findOne({ username: cleanUsername });
     if (!user) {
         throw new Error("Invalid Credentials");
     };
@@ -14,7 +17,12 @@ const authenticateUser = async (username, password) => {
         throw new Error("Invalid Credentials");
     }
 
-    const payload = { id: user._id, churchId: user.churchId, groupId: user.groupId, status: user.status }
+    const payload = { 
+        id: user._id, 
+        churchId: user.churchId, 
+        groupId: user.groupId, 
+        status: user.status 
+    };
 
     // Generate a JWT Access Token
     const accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '10m' });
