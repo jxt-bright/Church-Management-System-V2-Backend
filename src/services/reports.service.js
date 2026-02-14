@@ -115,4 +115,94 @@ const monthlyReport = async (params) => {
     return finalReport;
 };
 
-export { monthlyReport };
+
+
+const generalReport = async (params) => {
+    const start = new Date(`${params.startMonth}-01T00:00:00.000Z`);
+    const end = new Date(`${params.endMonth}-01T23:59:59.999Z`);
+    end.setMonth(end.getMonth() + 1);
+    end.setDate(0); 
+
+    const filter = { date: { $gte: start, $lte: end } };
+
+    if (params.churchId) {
+        filter.churchId = new mongoose.Types.ObjectId(params.churchId);
+    } else if (params.groupId) {
+        filter.groupId = new mongoose.Types.ObjectId(params.groupId);
+    }
+
+    const [dbRecords, specialRecords] = await Promise.all([
+        Attendance.find(filter).lean(),
+        SpecialService.find(filter).lean()
+    ]);
+
+    const finalReport = {
+        sunday: {}, monday: {}, thursday: {},
+        gck: {}, homeCaringFellowship: {}, seminar: []
+    };
+
+    // --- Process Regular Services (Calculate Averages) ---
+    const serviceMap = [
+        { key: 'sunday', dayNum: 0 },
+        { key: 'monday', dayNum: 1 },
+        { key: 'thursday', dayNum: 4 }
+    ];
+
+    serviceMap.forEach(({ key, dayNum }) => {
+        const matches = dbRecords.filter(r => new Date(r.date).getDay() === dayNum && !r.reason);
+        const count = matches.length || 1;
+
+        const totals = matches.reduce((acc, curr) => ({
+            am: acc.am + (curr.adultmale || 0), af: acc.af + (curr.adultfemale || 0),
+            ym: acc.ym + (curr.youthmale || 0), yf: acc.yf + (curr.youthfemale || 0),
+            cm: acc.cm + (curr.childrenmale || 0), cf: acc.cf + (curr.childrenfemale || 0),
+            nm: acc.nm + (curr.newcomersmales || 0), nf: acc.nf + (curr.newcomersfemales || 0),
+            o1: acc.o1 + (curr.firstoffering || 0), o2: acc.o2 + (curr.secondoffering || 0),
+        }), { am: 0, af: 0, ym: 0, yf: 0, cm: 0, cf: 0, nm: 0, nf: 0, o1: 0, o2: 0 });
+
+        finalReport[key] = {
+            am: Math.ceil(totals.am / count), af: Math.ceil(totals.af / count), at: Math.ceil((totals.am + totals.af) / count),
+            ym: Math.ceil(totals.ym / count), yf: Math.ceil(totals.yf / count), yt: Math.ceil((totals.ym + totals.yf) / count),
+            cm: Math.ceil(totals.cm / count), cf: Math.ceil(totals.cf / count), ct: Math.ceil((totals.cm + totals.cf) / count),
+            nm: Math.ceil(totals.nm / count), nf: Math.ceil(totals.nf / count), nt: Math.ceil((totals.nm + totals.nf) / count),
+            o1: (totals.o1 / count).toFixed(2), o2: (totals.o2 / count).toFixed(2), ot: ((totals.o1 + totals.o2) / count).toFixed(2)
+        };
+    });
+
+    // --- Process Special Services ---
+    const specialCats = [
+        { cat: 'GCK', key: 'gck', shouldAvg: true },
+        { cat: 'Home Caring Fellowship', key: 'homeCaringFellowship', shouldAvg: true },
+        { cat: 'Seminar', key: 'seminar', shouldAvg: false }
+    ];
+
+    specialCats.forEach(({ cat, key, shouldAvg }) => {
+        const catMatches = specialRecords.filter(r => r.category === cat);
+        
+        if (shouldAvg) {
+            const count = catMatches.length || 1;
+            const totals = catMatches.reduce((acc, curr) => ({
+                a: acc.a + (curr.adults || 0), y: acc.y + (curr.youths || 0), c: acc.c + (curr.children || 0)
+            }), { a: 0, y: 0, c: 0 });
+
+            finalReport[key] = {
+                a: Math.ceil(totals.a / count),
+                y: Math.ceil(totals.y / count),
+                c: Math.ceil(totals.c / count),
+                t: Math.ceil((totals.a + totals.y + totals.c) / count)
+            };
+        } else {
+            // Seminars remain as a listing
+            finalReport[key] = catMatches.map(r => ({
+                date: r.date, adults: r.adults, youths: r.youths, children: r.children, total: r.adults + r.youths + r.children
+            })).sort((a, b) => new Date(a.date) - new Date(b.date));
+        }
+    });
+
+    return finalReport;
+};
+
+
+
+
+export { monthlyReport, generalReport };

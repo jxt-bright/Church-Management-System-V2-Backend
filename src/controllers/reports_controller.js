@@ -18,6 +18,27 @@ const monthlyReport = async (req, res) => {
     }
 }
 
+
+
+const generalReport = async (req, res) => {
+    try {
+
+        const generalReport = await reportsService.generalReport(req.query);
+
+        res.status(200).json({
+            success: true, 
+            messsage: 'Report successfully generated',
+            report: generalReport
+        })
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error'})
+        
+    }
+}
+
+
+
 export {
     monthlyReport,
+    generalReport
 }
