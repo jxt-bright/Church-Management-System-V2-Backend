@@ -27,6 +27,7 @@ const userSchema = new Schema(
         memberId: {
             type: mongoose.Schema.Types.ObjectId, ref: 'Member',
             required: true,
+            unique: true,
         },
 
         churchId: {

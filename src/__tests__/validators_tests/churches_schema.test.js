@@ -68,7 +68,7 @@ describe('Register Church Schema', () => {
 
 
   it('should fail if phone number has invalid characters', () => {
-    const input = { ...baseChurch, phoneNumber: '0244-ABC-56' };
+    const input = { ...baseChurch, phoneNumber: '0244-ABC-5' };
     const { error } = registerChurchSchema.validate(input);
 
     expect(error).toBeDefined();

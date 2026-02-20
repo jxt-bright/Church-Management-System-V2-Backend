@@ -76,7 +76,7 @@ describe('Register Group Schema', () => {
 
 
   it('should fail if phone number has invalid characters', () => {
-    const input = { ...baseGroup, phoneNumber: '0244-ABC-56' };
+    const input = { ...baseGroup, phoneNumber: '0244-ABC-5' };
     const { error } = registerGroupSchema.validate(input);
 
     expect(error).toBeDefined();

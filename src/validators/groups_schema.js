@@ -38,7 +38,7 @@ const registerGroupSchema = Joi.object({
   phoneNumber: Joi.string()
     .trim()
     .min(10)
-    .max(15)
+    .max(10)
     .pattern(/^[0-9+\s-]+$/)
     .required()
     .messages({

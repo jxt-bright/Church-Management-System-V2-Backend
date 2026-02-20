@@ -108,4 +108,87 @@ describe('Auth Controller', () => {
       });
     });
   });
+
+
+
+  describe('requestPasswordReset', () => {
+    it('returns 200 when SMS is successfully sent', async () => {
+      req.body = { username: 'PastorKofi', phoneNumber: '0241234567' };
+      authService.requestPasswordReset.mockResolvedValue();
+
+      await authController.requestPasswordReset(req, res);
+
+      expect(authService.requestPasswordReset).toHaveBeenCalledWith(req.body);
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({
+        success: true,
+        message: "SMS successfully sent"
+      });
+    });
+
+    it('returns specific error status code from service failure', async () => {
+      const error = new Error("Invalid credentials");
+      error.statusCode = 404;
+      authService.requestPasswordReset.mockRejectedValue(error);
+
+      await authController.requestPasswordReset(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({ message: "Invalid credentials" });
+    });
+  });
+
+
+  
+  describe('authenticateCode', () => {
+    it('returns 200 and valid status when code is correct', async () => {
+      req.body = { username: 'PastorKofi', code: '123456' };
+      authService.authenticateCode.mockResolvedValue({ valid: true });
+
+      await authController.authenticateCode(req, res);
+
+      expect(authService.authenticateCode).toHaveBeenCalledWith(req.body);
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({
+        success: true,
+        valid: true
+      });
+    });
+
+    it('returns 400 when code is incorrect', async () => {
+      const error = new Error("Invalid verification code");
+      error.statusCode = 400;
+      authService.authenticateCode.mockRejectedValue(error);
+
+      await authController.authenticateCode(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({ message: "Invalid verification code" });
+    });
+  });
+
+
+
+  describe('resetPassword', () => {
+    it('returns 200 and success message on successful reset', async () => {
+      req.body = { username: 'PastorKofi', password: 'newPassword123' };
+      const mockResult = { success: true, message: "Password updated successfully" };
+      authService.resetPassword.mockResolvedValue(mockResult);
+
+      await authController.resetPassword(req, res);
+
+      expect(authService.resetPassword).toHaveBeenCalledWith(req.body);
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith(mockResult);
+    });
+
+    it('returns 500 on unexpected database error', async () => {
+      authService.resetPassword.mockRejectedValue(new Error("DB Error"));
+
+      await authController.resetPassword(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({ message: "DB Error" });
+    });
+  });
 });

@@ -1,12 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import jwt from 'jsonwebtoken';
 import { User } from '../../models/users_model.js';
+import { PasswordReset } from '../../models/passwordReset_model.js';
 import {
   authenticateUser,
-  refreshUserToken
+  refreshUserToken,
+  requestPasswordReset,
+  authenticateCode,
+  resetPassword
 } from '../../services/auth.service.js';
+import smsProvider from '../../utils/smsProvider.utils.js';
 
 vi.mock('../../models/users_model.js');
+vi.mock('../../models/passwordReset_model.js');
+vi.mock('../../utils/smsProvider.utils.js');
 vi.mock('jsonwebtoken');
 
 
@@ -150,6 +157,119 @@ describe('Auth Service', () => {
       await expect(
         refreshUserToken('cookie-token')
       ).rejects.toThrow('Forbidden');
+    });
+  });
+
+
+
+  describe('requestPasswordReset', () => {
+    const credentials = { username: 'PastorKofi', phoneNumber: '0241234567' };
+
+    it('sends an SMS and saves reset record if credentials match', async () => {
+      const mockUser = {
+        _id: 'user123',
+        username: 'PastorKofi',
+        memberId: { phoneNumber: '0241234567' }
+      };
+
+      // Mock the populate chain
+      User.findOne.mockReturnValue({
+        populate: vi.fn().mockResolvedValue(mockUser)
+      });
+      
+      PasswordReset.deleteOne.mockResolvedValue({});
+      // Mock the save method on the new instance
+      vi.spyOn(PasswordReset.prototype, 'save').mockResolvedValue({});
+
+      await requestPasswordReset(credentials);
+
+      expect(smsProvider.send).toHaveBeenCalledWith(
+        expect.stringContaining('0241234567'), 
+        expect.stringContaining('Password reset code')
+      );
+      expect(PasswordReset.deleteOne).toHaveBeenCalledWith({ userId: 'user123' });
+    });
+
+    it('throws 404 if user is not found', async () => {
+      User.findOne.mockReturnValue({
+        populate: vi.fn().mockResolvedValue(null)
+      });
+
+      await expect(requestPasswordReset(credentials)).rejects.toSatisfy((err) => {
+        return err.message === 'Invalid credentials' && err.statusCode === 404;
+      });
+    });
+
+    it('throws 400 if phone number does not match member record', async () => {
+      const mockUser = {
+        _id: 'user123',
+        memberId: { phoneNumber: 'wrong-number' }
+      };
+
+      User.findOne.mockReturnValue({
+        populate: vi.fn().mockResolvedValue(mockUser)
+      });
+
+      await expect(requestPasswordReset(credentials)).rejects.toSatisfy((err) => {
+        return err.message === 'Invalid credentials' && err.statusCode === 400;
+      });
+    });
+  });
+
+
+
+  describe('authenticateCode', () => {
+    const credentials = { username: 'PastorKofi', code: '123456' };
+
+    it('returns valid:true if code matches', async () => {
+      User.findOne.mockResolvedValue({ _id: 'user123' });
+      const mockResetRecord = {
+        compareCode: vi.fn().mockResolvedValue(true)
+      };
+      PasswordReset.findOne.mockResolvedValue(mockResetRecord);
+
+      const result = await authenticateCode(credentials);
+
+      expect(result).toEqual({ valid: true });
+      expect(mockResetRecord.compareCode).toHaveBeenCalledWith('123456');
+    });
+
+    it('throws 400 if code is incorrect', async () => {
+      User.findOne.mockResolvedValue({ _id: 'user123' });
+      PasswordReset.findOne.mockResolvedValue({
+        compareCode: vi.fn().mockResolvedValue(false)
+      });
+
+      await expect(authenticateCode(credentials)).rejects.toSatisfy((err) => {
+        return err.message === 'Invalid verification code' && err.statusCode === 400;
+      });
+    });
+  });
+
+
+
+  describe('resetPassword', () => {
+    it('updates user password and saves successfully', async () => {
+      const mockUser = {
+        username: 'PastorKofi',
+        password: 'oldPassword',
+        save: vi.fn().mockResolvedValue(true)
+      };
+      User.findOne.mockResolvedValue(mockUser);
+
+      const result = await resetPassword({ username: 'PastorKofi', password: 'newPassword123' });
+
+      expect(mockUser.password).toBe('newPassword123');
+      expect(mockUser.save).toHaveBeenCalled();
+      expect(result).toEqual({ success: true, message: "Password updated successfully" });
+    });
+
+    it('throws 404 if user is not found during password reset', async () => {
+      User.findOne.mockResolvedValue(null);
+
+      await expect(resetPassword({ username: 'ghost', password: '123' })).rejects.toSatisfy((err) => {
+        return err.message === 'User not found' && err.statusCode === 404;
+      });
     });
   });
 });

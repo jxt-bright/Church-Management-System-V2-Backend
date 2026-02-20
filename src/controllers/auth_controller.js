@@ -80,9 +80,51 @@ const logoutUser = async (req, res) => {
 };
 
 
+const requestPasswordReset = async (req, res) => {
+    try {
+        await authService.requestPasswordReset(req.body)
+
+        return res.status(200).json({ success: true, message: "SMS successfully sent" });
+        
+    } catch (error) {
+        const statusCode = error.statusCode || 500;
+        return res.status(statusCode).json({ message: error.message || 'Internal server error' });
+    }
+}
+
+
+const authenticateCode = async (req, res) => {
+    try {
+        const result = await authService.authenticateCode(req.body)
+
+        return res.status(200).json({ success: true, ...result });
+        
+    } catch (error) {
+        const statusCode = error.statusCode || 500;
+        return res.status(statusCode).json({ message: error.message || 'Internal server error' });
+    }
+}
+
+
+const resetPassword = async (req, res) => {
+    try {
+        const result = await authService.resetPassword(req.body)
+
+        return res.status(200).json(result);
+        
+    } catch (error) {
+        const statusCode = error.statusCode || 500;
+        return res.status(statusCode).json({ message: error.message || 'Internal server error' });
+    }
+}
+
+
 
 export {
     loginUser,
     refreshToken,
-    logoutUser
+    logoutUser,
+    requestPasswordReset,
+    authenticateCode,
+    resetPassword
 }
