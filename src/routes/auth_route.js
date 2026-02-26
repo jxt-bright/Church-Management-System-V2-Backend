@@ -11,10 +11,10 @@ const router = Router();
 
 
 // Middleware to prevent browser from caching protected content
-router.use((req, res, next) => {
-    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-    next();
-});
+// router.use((req, res, next) => {
+//     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+//     next();
+// });
 
 router.post('/login', validate(loginUserSchema), loginUser);
 
