@@ -33,6 +33,7 @@ const loginUser = async (req, res) => {
 // Refresh Token endpoint
 const refreshToken = async (req, res) => {
     try {
+        console.log('It came to refresh token at the backend')
         const cookies = req.cookies;
 
         // Check for refreshToken
@@ -46,6 +47,9 @@ const refreshToken = async (req, res) => {
             user: result.user,
             accessToken: result.accessToken,
         });
+        console.log("It came to refreshtoken controller, below is the refreshToken")
+        console.log(result.user)
+        console.log(result.accessToken)
 
     } catch (error) {
         if (error.message === "Forbidden") {
