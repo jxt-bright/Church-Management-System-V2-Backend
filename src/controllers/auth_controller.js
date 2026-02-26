@@ -10,7 +10,7 @@ const loginUser = async (req, res) => {
         res.cookie("refreshToken", result.refreshToken, {
             httpOnly: true,              // can't access via JS
             secure: process.env.NODE_ENV === "production",  // only over HTTPS in prod
-            sameSite: "Strict",          // or "None" if cross-site
+            sameSite: "None",          // or "None" if cross-site
             maxAge: 12 * 60 * 60 * 1000 // 12 hrs
         });
 
