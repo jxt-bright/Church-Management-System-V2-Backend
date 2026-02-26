@@ -35,11 +35,16 @@ const refreshToken = async (req, res) => {
     try {
         console.log('It came to refresh token at the backend')
         const cookies = req.cookies;
+        console.log('this is the cookies the frontend sent', cookies)
 
         // Check for refreshToken
-        if (!cookies?.refreshToken) return res.status(401).json({ message: "Unauthorized" });
+        if (!cookies?.refreshToken){
+            console.log("It came here in the if not refreshToken in cookies block")
+            return res.status(401).json({ message: "Unauthorized" });
+        }
 
         const result = await authService.refreshUserToken(cookies.refreshToken);
+        console.log('This is the results from the refreshUsertoken endpoint', result)
 
         // Send new Access Token
         res.status(200).json({
