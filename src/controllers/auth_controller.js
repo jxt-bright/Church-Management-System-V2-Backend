@@ -8,9 +8,9 @@ const loginUser = async (req, res) => {
         const result = await authService.authenticateUser(username, password);
 
         res.cookie("refreshToken", result.refreshToken, {
-            httpOnly: true,              // can't access via JS
-            secure: process.env.NODE_ENV === "production",  // only over HTTPS in prod
-            sameSite: "None",          // or "None" if cross-site
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "None",
             maxAge: 12 * 60 * 60 * 1000 // 12 hrs
         });
 
@@ -33,18 +33,14 @@ const loginUser = async (req, res) => {
 // Refresh Token endpoint
 const refreshToken = async (req, res) => {
     try {
-        console.log('It came to refresh token at the backend')
         const cookies = req.cookies;
-        console.log('this is the cookies the frontend sent', cookies)
 
         // Check for refreshToken
         if (!cookies?.refreshToken){
-            console.log("It came here in the if not refreshToken in cookies block")
             return res.status(401).json({ message: "Unauthorized" });
         }
 
         const result = await authService.refreshUserToken(cookies.refreshToken);
-        console.log('This is the results from the refreshUsertoken endpoint', result)
 
         // Send new Access Token
         res.status(200).json({
@@ -52,9 +48,6 @@ const refreshToken = async (req, res) => {
             user: result.user,
             accessToken: result.accessToken,
         });
-        console.log("It came to refreshtoken controller, below is the refreshToken")
-        console.log(result.user)
-        console.log(result.accessToken)
 
     } catch (error) {
         if (error.message === "Forbidden") {
@@ -79,7 +72,7 @@ const logoutUser = async (req, res) => {
         res.clearCookie("refreshToken", {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: "Strict",
+            sameSite: "None",
         });
 
         return res.status(200).json({ success: true, message: "Logged out" });
