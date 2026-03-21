@@ -90,6 +90,11 @@ const MemberSchema = new Schema({
         required: true,
         trim: true,
     },
+    department: {
+        type: String,
+        required: false,
+        trim: true,
+    },
     profileImage: {
         url: {
             type: String,

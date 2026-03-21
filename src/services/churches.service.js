@@ -1,6 +1,36 @@
 import { Church } from "../models/churches_model.js";
 import mongoose from 'mongoose';
 
+
+
+const fetchAllChurches_open = async (query) => {
+    const search = query.search || '';
+    
+    let matchStage = {};
+    if (search) {
+        // Matches names starting with the search string, case-insensitive
+        matchStage.name = { $regex: '^' + search, $options: 'i' };
+    }
+
+    // 2. Simple aggregation to get the full list
+    const churches = await Church.aggregate([
+        { $match: matchStage },
+        {
+            $project: {
+                _id: 1,
+                name: 1,
+                churchname: "$name", 
+                location: 1
+            }
+        },
+        { $sort: { name: 1 } }
+    ]);
+
+    return churches;
+};
+
+
+
 const createChurch = async (data) => {
     // Check if a church with the same name already exist
     const existing = await Church.findOne({ groupId: data.groupId, name: data.name });
@@ -138,5 +168,6 @@ export {
     fetchAllChurches,
     fetchChurchById,
     modifyChurch,
-    removeChurch
+    removeChurch,
+    fetchAllChurches_open
 };

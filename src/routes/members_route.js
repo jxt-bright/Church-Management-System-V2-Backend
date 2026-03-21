@@ -6,10 +6,12 @@ import verifyAccessLevel from '../middlewares/authorisation.js';
 
 import { registerMember, getMembers, getMemberById, updateMember, deleteMember } from '../controllers/members_controller.js';
 
+import { registerMember_open } from '../controllers/members_open_controller.js';
 
 const router = Router();
 
 
+router.post('/register_open', validate(registerMemberSchema), registerMember_open);
 
 // Authentication middleware
 router.use(authenticate)

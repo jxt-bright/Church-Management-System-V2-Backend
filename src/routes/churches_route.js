@@ -6,10 +6,11 @@ import verifyAccessLevel from '../middlewares/authorisation.js';
 
 import { registerChurch, getChurches, getChurchById, updateChurch, deleteChurch } from '../controllers/churches_controller.js';
 
+import { getChurches_open } from '../controllers/churches_open_controller.js';
 
 const router = Router();
 
-
+router.get('/open', getChurches_open);
 
 // Authentication middleware
 router.use(authenticate)

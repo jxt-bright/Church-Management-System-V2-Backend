@@ -52,6 +52,9 @@ const registerMemberSchema = Joi.object({
         .messages({
             "any.required": "Status of member is required"
         }),
+    department: Joi.string().trim().max(50).optional().allow('', null).messages({
+        "string.max": "Department name cannot exceed 50 characters"
+    }),
 
     //   Optional fields
     workOrSchool: Joi.string().trim().allow(null, ''),
