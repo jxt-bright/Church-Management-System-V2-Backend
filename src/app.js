@@ -27,20 +27,24 @@ const app = express();
 
 
 // Middlewares
-const allowedOrigins = [
-  process.env.CORS_ORIGIN_1,
-  process.env.CORS_ORIGIN_2
-];
 
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  }
-}));
+app.use(cors({ origin: '*' }));
+
+// const allowedOrigins = [
+//   process.env.CORS_ORIGIN_1,
+//   process.env.CORS_ORIGIN_2
+// ];
+
+// app.use(cors({
+//   origin: function (origin, callback) {
+//     if (!origin || allowedOrigins.includes(origin)) {
+//       callback(null, true);
+//     } else {
+//       callback(new Error('Not allowed by CORS'));
+//     }
+//   }
+// }));
+
 // app.use(cors({
 //   origin: process.env.CORS_ORIGIN,
 //   credentials: true,
