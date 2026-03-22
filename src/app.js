@@ -28,7 +28,7 @@ const app = express();
 
 // Middlewares
 
-app.use(cors({ origin: '*' }));
+// app.use(cors({ origin: '*' }));
 
 // const allowedOrigins = [
 //   process.env.CORS_ORIGIN_1,
