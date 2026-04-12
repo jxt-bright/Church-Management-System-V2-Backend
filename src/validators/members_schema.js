@@ -39,7 +39,7 @@ const registerMemberSchema = Joi.object({
 
     category: Joi.string()
         .trim()
-        .valid('Adult', 'Youth', 'Children')
+        .valid('Adult', 'Youth', 'Campus', 'Children')
         .required()
         .messages({
             "any.required": "Category of member is required"

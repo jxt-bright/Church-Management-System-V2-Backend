@@ -45,7 +45,7 @@ const MemberSchema = new Schema({
     },
     category: {
         type: String,
-        enum: ['Adult', 'Youth', 'Children'],
+        enum: ['Adult', 'Youth', 'Campus', 'Children'],
         required: true,
         trim: true,
     },
